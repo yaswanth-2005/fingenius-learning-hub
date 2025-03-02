@@ -1,14 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogIn, LogOut } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Mock auth state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Update scrolled state on scroll
   useEffect(() => {
@@ -19,9 +22,35 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Mock login/logout function
-  const handleAuthAction = () => {
-    setIsLoggedIn(!isLoggedIn);
+  // Check auth status on mount and when location changes
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          setIsLoggedIn(user.isAuthenticated);
+          setUserName(user.fullName || '');
+        } catch (error) {
+          setIsLoggedIn(false);
+          setUserName('');
+        }
+      } else {
+        setIsLoggedIn(false);
+        setUserName('');
+      }
+    };
+    
+    checkAuthStatus();
+  }, [location.pathname]);
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setIsLoggedIn(false);
+    setUserName('');
+    toast.success('Successfully logged out');
+    navigate('/');
   };
 
   // Close mobile menu when route changes
@@ -67,13 +96,27 @@ const Navbar = () => {
 
         {/* Auth Button */}
         <div className="hidden md:block">
-          <Button 
-            onClick={handleAuthAction}
-            variant="default"
-            className="bg-primary hover:bg-primary/90 text-white"
-          >
-            {isLoggedIn ? 'Logout' : 'Login / Sign Up'}
-          </Button>
+          {isLoggedIn ? (
+            <div className="flex items-center gap-4">
+              <span className="text-sm">Welcome, {userName}</span>
+              <Button 
+                onClick={handleLogout}
+                variant="outline"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              onClick={() => navigate('/login')}
+              variant="default"
+              className="bg-primary hover:bg-primary/90 text-white"
+            >
+              <LogIn className="h-4 w-4 mr-2" />
+              Login / Sign Up
+            </Button>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -108,13 +151,31 @@ const Navbar = () => {
               {link.name}
             </Link>
           ))}
-          <Button 
-            onClick={handleAuthAction}
-            variant="default"
-            className="bg-primary hover:bg-primary/90 text-white w-full mt-4"
-          >
-            {isLoggedIn ? 'Logout' : 'Login / Sign Up'}
-          </Button>
+          
+          {isLoggedIn ? (
+            <>
+              <div className="text-sm font-medium py-2 border-t">
+                Welcome, {userName}
+              </div>
+              <Button 
+                onClick={handleLogout}
+                variant="outline"
+                className="w-full"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button 
+              onClick={() => navigate('/login')}
+              variant="default"
+              className="bg-primary hover:bg-primary/90 text-white w-full mt-4"
+            >
+              <LogIn className="h-4 w-4 mr-2" />
+              Login / Sign Up
+            </Button>
+          )}
         </div>
       </div>
     </header>

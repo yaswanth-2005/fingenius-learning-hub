@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, Filter, BookOpen } from 'lucide-react';
+import { Search, Filter, BookOpen, Check } from 'lucide-react';
+import { toast } from 'sonner';
 
 const coursesData = [
   {
@@ -59,17 +61,47 @@ const coursesData = [
 ];
 
 const Courses = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLevel, setFilterLevel] = useState<string | null>(null);
   const [enrolledCourses, setEnrolledCourses] = useState<string[]>([]);
+  const [completedCourses, setCompletedCourses] = useState<string[]>([]);
+
+  // Load enrolled and completed courses from localStorage
+  useEffect(() => {
+    const savedEnrolled = localStorage.getItem('enrolledCourses');
+    if (savedEnrolled) {
+      setEnrolledCourses(JSON.parse(savedEnrolled));
+    }
+    
+    // Check for completed courses
+    coursesData.forEach(course => {
+      const progress = localStorage.getItem(`course-${course.id}-progress`);
+      if (progress) {
+        const completedModules = JSON.parse(progress);
+        if (completedModules.length === course.modules?.length) {
+          setCompletedCourses(prev => [...prev, course.id]);
+        }
+      }
+    });
+  }, []);
 
   const handleEnroll = (courseId: string) => {
     if (enrolledCourses.includes(courseId)) {
-      // If already enrolled, navigate to course (would handle actual navigation in a real app)
-      console.log(`Navigate to course ${courseId}`);
+      // If already enrolled, navigate to course detail page
+      navigate(`/course/${courseId}`);
     } else {
       // Add to enrolled courses
-      setEnrolledCourses([...enrolledCourses, courseId]);
+      const newEnrolledCourses = [...enrolledCourses, courseId];
+      setEnrolledCourses(newEnrolledCourses);
+      
+      // Save to localStorage
+      localStorage.setItem('enrolledCourses', JSON.stringify(newEnrolledCourses));
+      
+      toast.success('Successfully enrolled in the course!');
+      
+      // Navigate to course detail page
+      navigate(`/course/${courseId}`);
     }
   };
 
@@ -182,9 +214,24 @@ const Courses = () => {
                       <Button 
                         className="w-full" 
                         onClick={() => handleEnroll(course.id)}
-                        variant={enrolledCourses.includes(course.id) ? "secondary" : "default"}
+                        variant={
+                          completedCourses.includes(course.id) 
+                            ? "secondary" 
+                            : enrolledCourses.includes(course.id) 
+                            ? "outline" 
+                            : "default"
+                        }
                       >
-                        {enrolledCourses.includes(course.id) ? "Start Now" : "Enroll Now"}
+                        {completedCourses.includes(course.id) ? (
+                          <>
+                            <Check className="mr-2 h-4 w-4" />
+                            Completed
+                          </>
+                        ) : enrolledCourses.includes(course.id) ? (
+                          "Start Now"
+                        ) : (
+                          "Enroll Now"
+                        )}
                       </Button>
                     </CardFooter>
                   </Card>
