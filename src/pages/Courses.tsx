@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import CourseCard from '@/components/ui/CourseCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Filter } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search, Filter, BookOpen } from 'lucide-react';
 
 const coursesData = [
   {
@@ -65,7 +65,7 @@ const Courses = () => {
 
   const handleEnroll = (courseId: string) => {
     if (enrolledCourses.includes(courseId)) {
-      // If already enrolled, do nothing (in a real app, would navigate to course)
+      // If already enrolled, navigate to course (would handle actual navigation in a real app)
       console.log(`Navigate to course ${courseId}`);
     } else {
       // Add to enrolled courses
@@ -112,7 +112,7 @@ const Courses = () => {
                 />
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center flex-wrap gap-2">
                 <span className="text-sm font-medium"><Filter className="inline h-4 w-4 mr-1" /> Filter by:</span>
                 <Button 
                   variant={filterLevel === null ? "default" : "outline"} 
@@ -153,17 +153,41 @@ const Courses = () => {
             {filteredCourses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredCourses.map((course) => (
-                  <CourseCard
-                    key={course.id}
-                    id={course.id}
-                    title={course.title}
-                    description={course.description}
-                    thumbnailUrl={course.thumbnailUrl}
-                    duration={course.duration}
-                    level={course.level as any}
-                    isEnrolled={enrolledCourses.includes(course.id)}
-                    onEnroll={handleEnroll}
-                  />
+                  <Card key={course.id} className="overflow-hidden flex flex-col h-full card-hover">
+                    <div className="aspect-video w-full overflow-hidden">
+                      <img 
+                        src={course.thumbnailUrl} 
+                        alt={course.title}
+                        className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+                      />
+                    </div>
+                    <CardHeader>
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="px-2 py-1 bg-accent/10 text-accent-foreground text-xs rounded-md">
+                          {course.level}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          <BookOpen className="inline h-4 w-4 mr-1" />
+                          {course.duration}
+                        </div>
+                      </div>
+                      <CardTitle>{course.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                      <CardDescription className="text-muted-foreground">
+                        {course.description}
+                      </CardDescription>
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        className="w-full" 
+                        onClick={() => handleEnroll(course.id)}
+                        variant={enrolledCourses.includes(course.id) ? "secondary" : "default"}
+                      >
+                        {enrolledCourses.includes(course.id) ? "Start Now" : "Enroll Now"}
+                      </Button>
+                    </CardFooter>
+                  </Card>
                 ))}
               </div>
             ) : (

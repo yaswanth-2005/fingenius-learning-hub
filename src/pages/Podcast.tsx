@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import PodcastPlayer from '@/components/ui/PodcastPlayer';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, PlayCircle, Clock, Bookmark, BookmarkCheck, Heart } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 const podcastsData = [
   {
@@ -71,8 +73,43 @@ const podcastsData = [
 ];
 
 const Podcast = () => {
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [activeCategory, setActiveCategory] = React.useState('all');
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [likedPodcasts, setLikedPodcasts] = useState<string[]>([]);
+  const [bookmarkedPodcasts, setBookmarkedPodcasts] = useState<string[]>([]);
+
+  const handleLike = (id: string) => {
+    if (likedPodcasts.includes(id)) {
+      setLikedPodcasts(likedPodcasts.filter(podcastId => podcastId !== id));
+      toast({
+        title: "Removed from liked podcasts",
+        description: "The podcast has been removed from your liked list",
+      });
+    } else {
+      setLikedPodcasts([...likedPodcasts, id]);
+      toast({
+        title: "Added to liked podcasts",
+        description: "The podcast has been added to your liked list",
+      });
+    }
+  };
+
+  const handleBookmark = (id: string) => {
+    if (bookmarkedPodcasts.includes(id)) {
+      setBookmarkedPodcasts(bookmarkedPodcasts.filter(podcastId => podcastId !== id));
+      toast({
+        title: "Removed from bookmarks",
+        description: "The podcast has been removed from your bookmarks",
+      });
+    } else {
+      setBookmarkedPodcasts([...bookmarkedPodcasts, id]);
+      toast({
+        title: "Bookmarked",
+        description: "The podcast has been added to your bookmarks",
+      });
+    }
+  };
 
   const filteredPodcasts = podcastsData.filter((podcast) => {
     const matchesSearch = podcast.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -116,7 +153,7 @@ const Podcast = () => {
               </div>
               
               <Tabs value={activeCategory} onValueChange={setActiveCategory}>
-                <TabsList>
+                <TabsList className="flex flex-wrap h-auto">
                   {categories.map((category) => (
                     <TabsTrigger key={category} value={category} className="capitalize">
                       {category}
@@ -134,24 +171,76 @@ const Podcast = () => {
             {filteredPodcasts.length > 0 ? (
               <div className="space-y-6">
                 {filteredPodcasts.map((podcast) => (
-                  <PodcastPlayer
-                    key={podcast.id}
-                    id={podcast.id}
-                    title={podcast.title}
-                    description={podcast.description}
-                    imageUrl={podcast.imageUrl}
-                    duration={podcast.duration}
-                    date={podcast.date}
-                    audioUrl={podcast.audioUrl}
-                  />
+                  <Card key={podcast.id} className="overflow-hidden card-hover">
+                    <div className="flex flex-col md:flex-row">
+                      <div className="md:w-1/4 h-48 md:h-auto overflow-hidden">
+                        <img 
+                          src={podcast.imageUrl} 
+                          alt={podcast.title} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-col flex-grow p-6">
+                        <CardHeader className="p-0 pb-4">
+                          <div className="flex justify-between">
+                            <div>
+                              <div className="mb-1 text-xs font-medium text-muted-foreground">
+                                {podcast.category} • {podcast.date}
+                              </div>
+                              <CardTitle className="text-xl">{podcast.title}</CardTitle>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleLike(podcast.id)}
+                                className={likedPodcasts.includes(podcast.id) ? "text-primary" : ""}
+                              >
+                                <Heart className="h-5 w-5" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => handleBookmark(podcast.id)}
+                              >
+                                {bookmarkedPodcasts.includes(podcast.id) ? (
+                                  <BookmarkCheck className="h-5 w-5 text-primary" />
+                                ) : (
+                                  <Bookmark className="h-5 w-5" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-0 flex-grow">
+                          <CardDescription className="text-muted-foreground mb-4">
+                            {podcast.description}
+                          </CardDescription>
+                        </CardContent>
+                        <div className="flex items-center justify-between mt-4">
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <Clock className="h-4 w-4 mr-1" />
+                            {podcast.duration}
+                          </div>
+                          <Button className="flex items-center gap-1">
+                            <PlayCircle className="h-4 w-4" />
+                            Play Episode
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
                 ))}
               </div>
             ) : (
               <div className="text-center py-20">
                 <h3 className="text-xl font-medium mb-2">No podcasts found</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-4">
                   Try adjusting your search or category filter
                 </p>
+                <Button onClick={() => { setSearchTerm(''); setActiveCategory('all'); }}>
+                  Clear Filters
+                </Button>
               </div>
             )}
           </div>
