@@ -1,3 +1,4 @@
+'use client';
 
 import React from 'react';
 import Hero from '@/components/sections/Hero';
@@ -8,12 +9,28 @@ import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 const Index = () => {
-  // Mock user state (in a real app would come from auth)
-  const isLoggedIn = false;
-  const userName = 'John';
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    // Check if user is logged in when component mounts
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          setIsLoggedIn(user && user.isAuthenticated);
+          setUserName(user.fullName?.split(' ')[0] || 'User');
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
+      }
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -37,7 +54,7 @@ const Index = () => {
                 </p>
               </div>
               <Button asChild variant="outline" className="mt-4 md:mt-0">
-                <Link to="/courses">
+                <Link href="/courses">
                   View All Courses
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -69,7 +86,7 @@ const Index = () => {
                       {item === 3 && "Master budgeting, saving, and long-term financial planning for a secure future."}
                     </p>
                     <Button asChild className="w-full">
-                      <Link to="/courses">Enroll Now</Link>
+                      <Link href="/courses">Enroll Now</Link>
                     </Button>
                   </CardContent>
                 </Card>
@@ -90,7 +107,7 @@ const Index = () => {
                     Get instant answers to your financial questions from our intelligent AI assistant. Available 24/7 to help you make informed decisions.
                   </p>
                   <Button asChild>
-                    <Link to="/chatbot">
+                    <Link href="/chatbot">
                       Try It Now
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
@@ -152,7 +169,7 @@ const Index = () => {
                     Test your knowledge with daily quizzes covering current market trends and financial news.
                   </p>
                   <Button asChild>
-                    <Link to="/games">Take Today's Quiz</Link>
+                    <Link href="/games">Take Today's Quiz</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -169,7 +186,7 @@ const Index = () => {
                     Practice investing with virtual money in a realistic market environment without any real risk.
                   </p>
                   <Button asChild>
-                    <Link to="/games">Start Simulation</Link>
+                    <Link href="/games">Start Simulation</Link>
                   </Button>
                 </CardContent>
               </Card>

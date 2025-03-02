@@ -1,13 +1,18 @@
 
-import React, { useEffect } from 'react';
-import { Navigate, useLocation, Outlet } from 'react-router-dom';
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 
-const ProtectedRoute = () => {
-  const location = useLocation();
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const router = useRouter();
+  const pathname = usePathname();
   
   // Check if user is authenticated
   const isAuthenticated = () => {
+    if (typeof window === 'undefined') return false;
+    
     const userData = localStorage.getItem('user');
     if (!userData) return false;
     
@@ -22,16 +27,17 @@ const ProtectedRoute = () => {
   useEffect(() => {
     if (!isAuthenticated()) {
       toast.error('Please log in to continue');
+      router.push(`/login?from=${encodeURIComponent(pathname)}`);
     }
-  }, []);
+  }, [pathname, router]);
 
   if (!isAuthenticated()) {
-    // Redirect to login page and save the location they were trying to access
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Rendering nothing until redirect happens
+    return null;
   }
 
   // If authenticated, render the child routes
-  return <Outlet />;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

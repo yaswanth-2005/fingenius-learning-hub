@@ -1,6 +1,7 @@
+'use client';
 
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -37,16 +38,16 @@ const registrationDetailsSchema = z.object({
 type RegistrationDetailsValues = z.infer<typeof registrationDetailsSchema>;
 
 const RegistrationDetails = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   
   // Check if user has started registration
   useEffect(() => {
-    const tempUser = localStorage.getItem('tempUser');
+    const tempUser = typeof window !== 'undefined' ? localStorage.getItem('tempUser') : null;
     if (!tempUser) {
       toast.error('Please create an account first');
-      navigate('/signup');
+      router.push('/signup');
     }
-  }, [navigate]);
+  }, [router]);
   
   const form = useForm<RegistrationDetailsValues>({
     resolver: zodResolver(registrationDetailsSchema),
@@ -65,6 +66,8 @@ const RegistrationDetails = () => {
   });
 
   const onSubmit = (data: RegistrationDetailsValues) => {
+    if (typeof window === 'undefined') return;
+    
     // Get temporary user data
     const tempUserData = JSON.parse(localStorage.getItem('tempUser') || '{}');
     
@@ -79,14 +82,15 @@ const RegistrationDetails = () => {
     // Remove temporary user data
     localStorage.removeItem('tempUser');
     
-    // Store complete user data
+    // Store complete user data in localStorage and cookies for middleware
     localStorage.setItem('user', JSON.stringify(completeUserData));
+    document.cookie = `user=${JSON.stringify(completeUserData)}; path=/; max-age=${60*60*24*7}`; // 7 days
     
     // Show success message
     toast.success('Registration complete! Welcome to Fingenius');
     
     // Navigate to the home page
-    navigate('/');
+    router.push('/');
   };
 
   return (
@@ -238,20 +242,18 @@ const RegistrationDetails = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Lifestyle</FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select lifestyle" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="frugal">Frugal</SelectItem>
-                              <SelectItem value="moderate">Moderate</SelectItem>
-                              <SelectItem value="lavish">Lavish</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select lifestyle" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="frugal">Frugal</SelectItem>
+                            <SelectItem value="moderate">Moderate</SelectItem>
+                            <SelectItem value="lavish">Lavish</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

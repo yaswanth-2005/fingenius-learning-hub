@@ -1,6 +1,8 @@
+'use client';
 
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -21,12 +23,12 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 const Login = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   
-  // Get the redirect path from location state, or default to '/'
-  const from = location.state?.from?.pathname || '/';
+  // Get the redirect path from search params, or default to '/'
+  const from = searchParams?.get('from') || '/';
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -48,14 +50,15 @@ const Login = () => {
       isAuthenticated: true,
     };
     
-    // Store user data in localStorage
+    // Store user data in localStorage and cookies for middleware
     localStorage.setItem('user', JSON.stringify(userData));
+    document.cookie = `user=${JSON.stringify(userData)}; path=/; max-age=${60*60*24*7}`; // 7 days
     
     // Show success message
     toast.success('Login successful!');
     
     // Navigate to the page the user was trying to access, or home page
-    navigate(from, { replace: true });
+    router.push(from);
   };
 
   const toggleShowPassword = () => {
@@ -140,7 +143,7 @@ const Login = () => {
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Don't have an account?{" "}
-                <Link to="/signup" className="text-primary hover:underline">
+                <Link href="/signup" className="text-primary hover:underline">
                   Sign up
                 </Link>
               </p>

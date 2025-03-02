@@ -1,6 +1,8 @@
+'use client';
 
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -26,7 +28,7 @@ const signupSchema = z.object({
 type SignupValues = z.infer<typeof signupSchema>;
 
 const SignUp = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
@@ -59,7 +61,7 @@ const SignUp = () => {
     toast.success('Account created successfully!');
     
     // Navigate to the registration details page
-    navigate('/registration-details');
+    router.push('/registration-details');
   };
 
   return (
@@ -189,7 +191,7 @@ const SignUp = () => {
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Already have an account?{" "}
-                <Link to="/login" className="text-primary hover:underline">
+                <Link href="/login" className="text-primary hover:underline">
                   Sign in
                 </Link>
               </p>
